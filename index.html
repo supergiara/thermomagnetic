@@ -28,6 +28,9 @@
         margin: 8px 0 20px 0;
         font-size: 16px;
     }
+    input::placeholder {
+        color: #aaa;
+    }
     button {
         width: 100%;
         padding: 15px;
@@ -49,6 +52,10 @@
     .output h2 {
         margin-top: 0;
     }
+    .avg { color: green; }
+    .peak { color: blue; }
+    .curveC { color: orange; }
+    .curveD { color: red; }
 </style>
 </head>
 <body>
@@ -58,10 +65,10 @@
 <h1>Thermomagnetic Calculator</h1>
 
 <label>Motor Power (kW)</label>
-<input type="number" id="power" step="0.1">
+<input type="number" id="power" step="0.1" placeholder="Enter motor power in kW">
 
 <label>Voltage (V)</label>
-<input type="number" id="voltage">
+<input type="number" id="voltage" placeholder="Enter voltage in V">
 
 <label>Phases</label>
 <select id="phases">
@@ -81,64 +88,68 @@
 
 <script>
 function calculate() {
-
     const power = parseFloat(document.getElementById("power").value);
     const voltage = parseFloat(document.getElementById("voltage").value);
     const phases = parseInt(document.getElementById("phases").value);
     const start = document.getElementById("start").value;
 
+    // --- VALIDATION ---
     if (isNaN(power) || isNaN(voltage)) {
-        alert("Please enter valid numeric values.");
+        alert("Please enter valid numeric values for power and voltage.");
+        return;
+    }
+    if (![1,3].includes(phases) || !["DOL","STAR-DELTA"].includes(start)) {
+        alert("Please select valid phases and start mode.");
         return;
     }
 
-    // --- AVG CURRENT (Excel formula replicated) ----
-    const eff = (power < 5 ? 0.8 : 0.85);
+    // --- AVERAGE CURRENT ---
+    const eff = (power < 5 ? 0.8 : 0.85); // efficiency
     const divisorPh = (phases === 3 ? Math.sqrt(3) : 1);
 
-    let avg = (power / (voltage * eff)) * 1000 / divisorPh / 0.9;
+    let avg = (power / (voltage * eff)) * 1000 / divisorPh / 0.9; // includes pf 0.9
     avg = Number(avg.toFixed(1));
 
     // --- PEAK CURRENT ---
-    let peak;
-    if (start === "DOL") peak = avg * 7;
-    else peak = avg * 7 / 3;
+    let peak = (start === "DOL") ? avg * 7 : avg * 7 / 3;
     peak = Number(peak.toFixed(1));
 
     // --- BREAKER NOMINAL LIST ---
     const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
 
-    // -------- CURVE C --------
+    // --- CURVE C ---
     let curveC = "Not found";
     for (let i = 0; i < breakers.length; i++) {
-        const Cval = breakers[i] * 5;   // C column
-        const diff = Cval - avg;
-        if (diff >= 0) {
+        if (breakers[i] * 5 >= avg) {
             curveC = "C" + breakers[i];
             break;
         }
     }
+    if (curveC === "Not found") curveC = "C>50";
 
-    // -------- CURVE D --------
+    // --- CURVE D ---
     let curveD = "Not found";
     for (let i = 0; i < breakers.length; i++) {
-        const Dval = breakers[i] * 10;   // D column
-        const diff = Dval - avg;
-        if (diff >= 0) {
+        if (breakers[i] * 10 >= avg) {
             curveD = "D" + breakers[i];
             break;
         }
     }
+    if (curveD === "Not found") curveD = "D>50";
 
+    // --- DISPLAY RESULTS ---
     document.getElementById("result").innerHTML = `
         <h2>Results</h2>
-        <p><strong>Average Current:</strong> ${avg} A</p>
-        <p><strong>Peak Current:</strong> ${peak} A</p>
-        <p><strong>Thermomagnetic Curve C:</strong> ${curveC}</p>
-        <p><strong>Thermomagnetic Curve D:</strong> ${curveD}</p>
+        <p><strong class="avg">Average Current:</strong> ${avg} A</p>
+        <p><strong class="peak">Peak Current:</strong> ${peak} A</p>
+        <p><strong class="curveC">Thermomagnetic Curve C:</strong> ${curveC}</p>
+        <p><strong class="curveD">Thermomagnetic Curve D:</strong> ${curveD}</p>
     `;
 }
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
