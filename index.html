@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermomagnetic Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f5f5f5;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        input, select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: #fff8c6;
+            font-size: 16px;
+        }
+
+        .result-box {
+            background: #e8e8e8;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #logo {
+            width: 140px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #0f5598;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <img id="logo" src="logo.png">
+
+    <h2>Thermomagnetic Calculator</h2>
+
+    <input id="power" type="number" step="0.1" placeholder="Motor Power (kW)">
+    <input id="voltage" type="number" placeholder="Voltage (V)">
+
+    <select id="phases">
+        <option value="">Phases…</option>
+        <option value="1">1 Phase</option>
+        <option value="3">3 Phase</option>
+    </select>
+
+    <select id="start">
+        <option value="">Start…</option>
+        <option value="DOL">DOL</option>
+        <option value="StarDelta">Star-Delta</option>
+        <option value="SoftStart">Soft Start</option>
+    </select>
+
+    <button onclick="calculate()">CALCOLA</button>
+
+    <div class="result-box" id="avgAbs">Avg Absorption: —</div>
+    <div class="result-box" id="maxAbs">Max Absorption: —</div>
+    <div class="result-box" id="curveC">Thermomagnetic Curve C: —</div>
+    <div class="result-box" id="curveD">Thermomagnetic Curve D: —</div>
+
+</div>
+
+
+<script>
+
+// Tabella curve prese dal tuo Excel
+const curvaTable = [
+    {avg: 6,  C: 30,  D: 60},
+    {avg: 10, C: 50,  D: 100},
+    {avg: 16, C: 80,  D: 160},
+    {avg: 20, C: 100, D: 200},
+    {avg: 25, C: 125, D: 250}
+];
+
+function getCurveValue(avg, type) {
+    for (let row of curvaTable) {
+        if (avg <= row.avg) return row[type];
+    }
+    // se avg è più grande dell'ultima riga → usare avg stesso
+    return avg;
+}
+
+function calculate() {
+
+    const power = parseFloat(document.getElementById("power").value);
+    const voltage = parseFloat(document.getElementById("voltage").value);
+    const phases = parseInt(document.getElementById("phases").value);
+    const start = document.getElementById("start").value;
+
+    if (!power || !voltage || !phases || !start) {
+        alert("Riempi tutti i campi in giallo.");
+        return;
+    }
+
+    // -----------------------------
+    // FORMULE REALI IMPLEMENTATE
+    // -----------------------------
+
+    const effFactor = (power < 5 ? 0.8 : 0.85);
+    const phaseFactor = (phases === 3 ? Math.sqrt(3) : 1);
+
+    // Avg absorption
+    let avgAbs = power / (voltage * effFactor) * 1000 / phaseFactor / 0.9;
+
+    // Max absorption
+    let maxAbs =
+        (start === "DOL")
+        ? avgAbs * 7
+        : avgAbs * 7 / 3;
+
+    // Curva C / D secondo tabella Excel
+    const tabC = getCurveValue(avgAbs, "C");
+    const tabD = getCurveValue(avgAbs, "D");
+
+    const curveC = "C" + Math.max(Math.round(avgAbs), tabC);
+    const curveD = "D" + Math.max(Math.round(avgAbs), tabD);
+
+    // Output su pagina
+    document.getElementById("avgAbs").innerText = "Avg Absorption: " + Math.round(avgAbs) + " A";
+    document.getElementById("maxAbs").innerText = "Max Absorption: " + Math.round(maxAbs) + " A";
+    document.getElementById("curveC").innerText = "Thermomagnetic Curve C: " + curveC;
+    document.getElementById("curveD").innerText = "Thermomagnetic Curve D: " + curveD;
+}
+</script>
+
+</body>
+</html>
