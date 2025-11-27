@@ -1,78 +1,167 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Thermomagnetic Calculator</title>
 <style>
-    body { font-family: Arial, sans-serif; text-align:center; background:#f5f5f5; padding:30px; }
-    .container { max-width:480px; margin:auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 3px 14px rgba(0,0,0,0.12); }
-    input, select { width:90%; padding:10px; margin:10px 0; border-radius:6px; border:1px solid #ccc; background:#fff8c6; font-size:16px; }
-    button { padding:12px 24px; background:#1976d2; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
-    button:hover { background:#0f5598; }
-    .result { background:#eee; padding:12px; border-radius:8px; margin-top:12px; font-weight:700; }
-    #logo { width:140px; margin-bottom:14px; }
-    small.note { display:block; margin-top:8px; color:#666; font-weight:400; }
+    :root{
+        --card-w: 520px;
+    }
+    body {
+        font-family: Inter, Arial, Helvetica, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+    }
+    .card {
+        width: var(--card-w);
+        max-width: calc(100% - 40px);
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 26px;
+        box-shadow: 0 8px 30px rgba(15,23,42,0.08);
+        text-align: center;
+    }
+    #logo {
+        width: 220px;               /* larger logo */
+        height: auto;
+        margin: 6px auto 14px;
+        display: block;
+    }
+    h1 { margin: 6px 0 18px; font-size: 20px; color:#0f1724; }
+    .row { margin: 8px 0; }
+    input[type="number"], select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 10px;
+        font-size: 15px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #ffffff; /* white background requested */
+        color: #0f1724;
+    }
+    select { appearance: auto; }
+    .controls { margin-top: 12px; display:block; }
+    button.calc {
+        margin-top: 14px;
+        background: #0b63c6;
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        font-size: 15px;
+    }
+    button.calc:hover { background:#094f9b; }
+    .results {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .result {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 700;
+        color: #0f1724;
+        text-align: left;
+    }
+    .label { font-weight:600; color:#334155; font-size:13px; margin-bottom:6px; display:block; }
+    small.note { display:block; margin-top:10px; color:#64748b; }
+    footer { margin-top:12px; font-size:12px; color:#94a3b8; }
 </style>
 </head>
 <body>
-<div class="container">
+  <div class="card" role="main" aria-labelledby="title">
     <img id="logo" src="logo.png" alt="logo">
-    <h2>Thermomagnetic Calculator</h2>
+    <h1 id="title">Thermomagnetic Calculator</h1>
 
-    <input id="power" type="number" step="0.1" placeholder="Motor Power (kW) (es. 7.5)">
-    <input id="voltage" type="number" step="1" placeholder="Voltage (V) (es. 400)">
+    <div class="row">
+      <label class="label" for="power">Motor Power (kW)</label>
+      <input id="power" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 7.5">
+    </div>
 
-    <select id="phases">
-        <option value="">Phases…</option>
-        <option value="1">1 Phase</option>
-        <option value="3">3 Phase</option>
-    </select>
+    <div class="row">
+      <label class="label" for="voltage">Voltage (V)</label>
+      <input id="voltage" type="number" step="1" inputmode="numeric" placeholder="e.g. 400">
+    </div>
 
-    <select id="start">
-        <option value="">Start…</option>
+    <div class="row">
+      <label class="label" for="phases">Phases</label>
+      <select id="phases" aria-label="Phases">
+        <option value="">Select phases…</option>
+        <option value="1">1</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label class="label" for="start">Start type</label>
+      <select id="start" aria-label="Start type">
+        <option value="">Select start…</option>
         <option value="DOL">DOL</option>
         <option value="StarDelta">Star-Delta</option>
         <option value="SoftStart">Soft Start</option>
-    </select>
+      </select>
+    </div>
 
-    <button onclick="calculate()">CALCOLA</button>
+    <div class="controls">
+      <button class="calc" onclick="calculate()">CALCULATE</button>
+    </div>
 
-    <div class="result" id="avgAbs">Avg Absorption: —</div>
-    <div class="result" id="maxAbs">Max Absorption: —</div>
-    <div class="result" id="curveC">Thermomagnetic Curve C: —</div>
-    <div class="result" id="curveD">Thermomagnetic Curve D: —</div>
+    <div class="results" aria-live="polite">
+      <div class="result" id="avgAbs">Avg Absorption: — A</div>
+      <div class="result" id="maxAbs">Max Absorption: — A</div>
+      <div class="result" id="curveC">Thermomagnetic Curve C: —</div>
+      <div class="result" id="curveD">Thermomagnetic Curve D: —</div>
+    </div>
 
-    <small class="note">I magnetotermici disponibili: 6,10,16,20,25,32,40,50</small>
-</div>
+    <small class="note">Available breakers: 6, 10, 16, 20, 25, 32, 40, 50</small>
+    <footer>Based on your Excel logic</footer>
+  </div>
 
 <script>
-// Tabella F del foglio Excel
+// Breaker list (F column)
 const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
 
-// Restituisce il primo magnetotermico >= valore richiesto,
-// oppure l'ultimo disponibile se nessuno è sufficientemente grande.
-function pickBreakerAtLeast(value) {
-    for (let b of breakers) {
-        if (b >= value) return b;
+// Helper: pick the first breaker where the corresponding difference (col - target) >= 0
+// If none found, return last breaker
+function pickFromDifferences(setValues, targetValue, multiplier=1) {
+    // setValues: array of F values
+    // targetValue: a number to compare against (already scaled as needed)
+    // multiplier: use to compute H=F*multiplier when needed; here multiplier 1,5,10 are used via multiplier parameter.
+    for (let i = 0; i < setValues.length; i++) {
+        const F = setValues[i];
+        const colValue = F * multiplier;   // e.g. H = F*5 or J = F*10 or simply F*1
+        const diff = colValue - targetValue;
+        if (diff >= 0) return F;
     }
-    return breakers[breakers.length - 1];
+    return setValues[setValues.length - 1];
 }
 
 function calculate() {
+    // read inputs
     const power = parseFloat(document.getElementById("power").value);
     const voltage = parseFloat(document.getElementById("voltage").value);
-    const phases = parseInt(document.getElementById("phases").value);
+    const phasesVal = document.getElementById("phases").value;
     const start = document.getElementById("start").value;
 
-    if (!power || !voltage || !phases || !start) {
-        alert("Riempi tutti i campi in giallo.");
+    // validation
+    if (isNaN(power) || isNaN(voltage) || (phasesVal !== "1" && phasesVal !== "3") || !start) {
+        alert("Please fill all fields correctly.");
         return;
     }
+    const phases = parseInt(phasesVal, 10);
 
-    // --- FORMULA AVG (esattamente come nel tuo Excel)
-    // = A2 / ( B2 * SE(A2<5;0,8;0,85) ) *1000 / SE(C2=3;RADQ(3);1) / 0,9
+    // ----- AVG (exact formula you confirmed)
+    // avg = power / ( voltage * (power < 5 ? 0.8 : 0.85) ) * 1000 / ( phases==3 ? sqrt(3) : 1 ) / 0.9
     const effFactor = (power < 5 ? 0.8 : 0.85);
-    const phaseFactor = (phases === 3 ? Math.sqrt(3) : 1);
-
-    let avg
+    const
