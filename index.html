@@ -137,7 +137,6 @@ function calculate() {
 
     // Thermomagnetic
     let thermoC = roundUpToStandard(Iavg * 1.25);
-    let thermoD = roundUpToStandard(Iavg * 1.6);
 
     // Display in table
     const outputDiv = document.getElementById('output');
@@ -146,8 +145,8 @@ function calculate() {
             <tr><th>Parameter</th><th>Value</th></tr>
             <tr><td>Average Current</td><td>${Iavg} A</td></tr>
             <tr><td>Peak Current</td><td>${Ipeak} A</td></tr>
-            <tr><td>Thermomagnetic C</td><td>${thermoC} A</td></tr>
-            <tr><td>Thermomagnetic D</td><td>${thermoD} A</td></tr>
+            <tr><td>Thermomagnetic</td><td>C ${thermoC} A</td></tr>
+            <tr><td>Fuse aM</td><td>${thermoC} A</td></tr>
         </table>
     `;
 }
