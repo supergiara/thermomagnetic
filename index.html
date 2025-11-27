@@ -1,180 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
 <title>Thermomagnetic Calculator</title>
 <style>
-    :root{ --card-w: 520px; }
     body {
-        font-family: Inter, Arial, sans-serif;
-        background: #f4f6f8;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 24px;
+        font-family: Arial, sans-serif;
+        padding: 40px;
+        max-width: 900px;
+        margin: auto;
     }
-    .card {
-        width: var(--card-w);
-        max-width: calc(100% - 40px);
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 26px;
-        box-shadow: 0 8px 30px rgba(15,23,42,0.08);
+    h1 {
         text-align: center;
+        margin-bottom: 20px;
     }
-    #logo {
-        width: 220px;
-        height: auto;
-        margin: 6px auto 14px;
+    img {
         display: block;
+        margin: 0 auto 30px auto;
+        width: 200px;
     }
-    h1 { margin: 6px 0 18px; font-size: 20px; color:#0f1724; }
-    .row { margin: 8px 0; }
-    input[type="number"], select {
+    label {
+        font-weight: bold;
+    }
+    input, select {
         width: 100%;
-        box-sizing: border-box;
-        padding: 12px 10px;
-        font-size: 15px;
-        border-radius: 8px;
-        border: 1px solid #d1d5db;
-        background: white;
-        color: #0f1724;
+        padding: 10px;
+        margin: 8px 0 20px 0;
+        font-size: 16px;
     }
-    button.calc {
-        margin-top: 14px;
-        background: #0b63c6;
+    button {
+        width: 100%;
+        padding: 15px;
+        background-color: #333;
         color: white;
+        font-size: 18px;
         border: none;
-        padding: 12px 18px;
-        border-radius: 8px;
         cursor: pointer;
-        font-weight: 600;
-        width: 100%;
-        font-size: 15px;
+        margin-top: 10px;
     }
-    button.calc:hover { background:#094f9b; }
-    .results {
-        margin-top: 16px;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
+    button:hover {
+        background-color: #555;
     }
-    .result {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 12px;
-        font-weight: 700;
-        color: #0f1724;
-        text-align: left;
+    .output {
+        margin-top: 30px;
+        padding: 20px;
+        border: 1px solid #ddd;
     }
-    .label { font-weight:600; color:#334155; font-size:13px; margin-bottom:6px; display:block; }
+    .output h2 {
+        margin-top: 0;
+    }
 </style>
 </head>
-
 <body>
-<div class="card">
-    <img id="logo" src="logo.png" alt="logo">
-    <h1>Thermomagnetic Calculator</h1>
 
-    <div class="row">
-        <label class="label">Motor Power (kW)</label>
-        <input id="power" type="number" step="0.1" placeholder="e.g. 7.5">
-    </div>
+<img src="logo.png" alt="Logo">
 
-    <div class="row">
-        <label class="label">Voltage (V)</label>
-        <input id="voltage" type="number" step="1" placeholder="e.g. 400">
-    </div>
+<h1>Thermomagnetic Calculator</h1>
 
-    <div class="row">
-        <label class="label">Phases</label>
-        <select id="phases">
-            <option value="">Select phases…</option>
-            <option value="1">1</option>
-            <option value="3">3</option>
-        </select>
-    </div>
+<label>Motor Power (kW)</label>
+<input type="number" id="power" step="0.1">
 
-    <div class="row">
-        <label class="label">Start type</label>
-        <select id="start">
-            <option value="">Select start…</option>
-            <option value="DOL">DOL</option>
-            <option value="StarDelta">Star-Delta</option>
-            <option value="SoftStart">Soft Start</option>
-        </select>
-    </div>
+<label>Voltage (V)</label>
+<input type="number" id="voltage">
 
-    <button class="calc" onclick="calculate()">CALCULATE</button>
+<label>Phases</label>
+<select id="phases">
+    <option value="1">1</option>
+    <option value="3">3</option>
+</select>
 
-    <div class="results">
-        <div class="result" id="avgAbs">Avg Absorption: — A</div>
-        <div class="result" id="maxAbs">Max Absorption: — A</div>
-        <div class="result" id="curveC">Thermomagnetic Curve C: —</div>
-        <div class="result" id="curveD">Thermomagnetic Curve D: —</div>
-    </div>
-</div>
+<label>Start Mode</label>
+<select id="start">
+    <option value="DOL">DOL</option>
+    <option value="STAR-DELTA">Star-Delta</option>
+</select>
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="output" id="result"></div>
 
 <script>
-// Available breakers
-const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
-
-// Generic function to compare target with F*multiplier (for G, I, K logic)
-function pickFromDifferences(setValues, targetValue, multiplier=1) {
-    for (let i = 0; i < setValues.length; i++) {
-        const F = setValues[i];
-        const colValue = F * multiplier;
-        const diff = colValue - targetValue;
-        if (diff >= 0) return F;
-    }
-    return setValues[setValues.length - 1];
-}
-
 function calculate() {
-    // Read values
+
     const power = parseFloat(document.getElementById("power").value);
     const voltage = parseFloat(document.getElementById("voltage").value);
-    const phasesVal = document.getElementById("phases").value;
+    const phases = parseInt(document.getElementById("phases").value);
     const start = document.getElementById("start").value;
 
-    if (isNaN(power) || isNaN(voltage) || phasesVal === "" || start === "") {
-        alert("Please fill all fields correctly.");
+    if (isNaN(power) || isNaN(voltage)) {
+        alert("Please enter valid numeric values.");
         return;
     }
 
-    const phases = parseInt(phasesVal);
+    // --- AVG CURRENT (Excel formula replicated) ----
+    const eff = (power < 5 ? 0.8 : 0.85);
+    const divisorPh = (phases === 3 ? Math.sqrt(3) : 1);
 
-    // ---- AVG calculation (confirmed formula)
-    const effFactor = (power < 5 ? 0.8 : 0.85);
-    const phaseFactor = (phases === 3 ? Math.sqrt(3) : 1);
+    let avg = (power / (voltage * eff)) * 1000 / divisorPh / 0.9;
+    avg = Number(avg.toFixed(1));
 
-    let avg = power / (voltage * effFactor);
-    avg = avg * 1000 / phaseFactor / 0.9;
+    // --- PEAK CURRENT ---
+    let peak;
+    if (start === "DOL") peak = avg * 7;
+    else peak = avg * 7 / 3;
+    peak = Number(peak.toFixed(1));
 
-    const roundedAvg = Math.round(avg);
+    // --- BREAKER NOMINAL LIST ---
+    const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
 
-    // ---- MAX absorption
-    let maxAbs = (start === "DOL") ? roundedAvg * 7 : roundedAvg * 7 / 3;
+    // -------- CURVE C --------
+    let curveC = "Not found";
+    for (let i = 0; i < breakers.length; i++) {
+        const Cval = breakers[i] * 5;   // C column
+        const diff = Cval - avg;
+        if (diff >= 0) {
+            curveC = "C" + breakers[i];
+            break;
+        }
+    }
 
-    // ---- Thermomagnetic C and D logic
-    const targetC = avg * 5;
-    const targetD = avg * 10;
+    // -------- CURVE D --------
+    let curveD = "Not found";
+    for (let i = 0; i < breakers.length; i++) {
+        const Dval = breakers[i] * 10;   // D column
+        const diff = Dval - avg;
+        if (diff >= 0) {
+            curveD = "D" + breakers[i];
+            break;
+        }
+    }
 
-    const breakerAvg = pickFromDifferences(breakers, avg, 1);
-    const breakerC = pickFromDifferences(breakers, targetC, 5);
-    const breakerD = pickFromDifferences(breakers, targetD, 10);
-
-    const finalC = Math.max(breakerAvg, breakerC);
-    const finalD = Math.max(breakerAvg, breakerD);
-
-    // ---- Output
-    document.getElementById("avgAbs").innerText = "Avg Absorption: " + Math.round(avg) + " A";
-    document.getElementById("maxAbs").innerText = "Max Absorption: " + Math.round(maxAbs) + " A";
-    document.getElementById("curveC").innerText = "Thermomagnetic Curve C: C" + finalC;
-    document.getElementById("curveD").innerText = "Thermomagnetic Curve D: D" + finalD;
+    document.getElementById("result").innerHTML = `
+        <h2>Results</h2>
+        <p><strong>Average Current:</strong> ${avg} A</p>
+        <p><strong>Peak Current:</strong> ${peak} A</p>
+        <p><strong>Thermomagnetic Curve C:</strong> ${curveC}</p>
+        <p><strong>Thermomagnetic Curve D:</strong> ${curveD}</p>
+    `;
 }
 </script>
 
