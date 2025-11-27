@@ -93,24 +93,17 @@
 
 </div>
 
-
 <script>
 
-// Tabella curve prese dal tuo Excel
-const curvaTable = [
-    {avg: 6,  C: 30,  D: 60},
-    {avg: 10, C: 50,  D: 100},
-    {avg: 16, C: 80,  D: 160},
-    {avg: 20, C: 100, D: 200},
-    {avg: 25, C: 125, D: 250}
-];
+// Magnetotermici disponibili
+const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
 
-function getCurveValue(avg, type) {
-    for (let row of curvaTable) {
-        if (avg <= row.avg) return row[type];
+// Restituisce il primo magnetotermico >= valore richiesto
+function pickBreaker(value) {
+    for (let b of breakers) {
+        if (b >= value) return b;
     }
-    // se avg è più grande dell'ultima riga → usare avg stesso
-    return avg;
+    return breakers[breakers.length - 1]; // se troppo grande → 50
 }
 
 function calculate() {
@@ -141,14 +134,15 @@ function calculate() {
         ? avgAbs * 7
         : avgAbs * 7 / 3;
 
-    // Curva C / D secondo tabella Excel
-    const tabC = getCurveValue(avgAbs, "C");
-    const tabD = getCurveValue(avgAbs, "D");
+    // Curva C = primo magnetotermico >= avg*5
+    let C_required = Math.round(avgAbs) * 5;
+    let curveC = "C" + pickBreaker(C_required);
 
-    const curveC = "C" + Math.max(Math.round(avgAbs), tabC);
-    const curveD = "D" + Math.max(Math.round(avgAbs), tabD);
+    // Curva D = primo magnetotermico >= avg*10
+    let D_required = Math.round(avgAbs) * 10;
+    let curveD = "D" + pickBreaker(D_required);
 
-    // Output su pagina
+    // Output
     document.getElementById("avgAbs").innerText = "Avg Absorption: " + Math.round(avgAbs) + " A";
     document.getElementById("maxAbs").innerText = "Max Absorption: " + Math.round(maxAbs) + " A";
     document.getElementById("curveC").innerText = "Thermomagnetic Curve C: " + curveC;
