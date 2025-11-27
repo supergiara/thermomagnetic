@@ -39,9 +39,6 @@
         width: 140px;
         text-align: right;
     }
-    select {
-        width: 140px;
-    }
     button {
         background-color: #007bff;
         color: white;
@@ -73,9 +70,6 @@
     }
     .output th {
         background-color: #f0f0f0;
-    }
-    .output td.value {
-        text-align: center;
     }
 </style>
 </head>
@@ -151,14 +145,10 @@ function calculate() {
     outputDiv.innerHTML = `
         <table>
             <tr><th>Parameter</th><th>Value</th></tr>
-            <tr><td>Power</td><td class="value">${P} kW</td></tr>
-            <tr><td>Voltage</td><td class="value">${V} V</td></tr>
-            <tr><td>Phases</td><td class="value">${phases}</td></tr>
-            <tr><td>Start Type</td><td class="value">${startType}</td></tr>
-            <tr><td>Average Current</td><td class="value">${Iavg} A</td></tr>
-            <tr><td>Peak Current</td><td class="value">${Ipeak} A</td></tr>
-            <tr><td>Thermomagnetic</td><td class="value">C ${thermoC} A</td></tr>
-            <tr><td>Fuse aM</td><td class="value">${thermoC} A</td></tr>
+            <tr><td>Average Current</td><td>${Iavg} A</td></tr>
+            <tr><td>Peak Current</td><td>${Ipeak} A</td></tr>
+            <tr><td>Thermomagnetic</td><td>C ${thermoC} A</td></tr>
+            <tr><td>Fuse aM</td><td>${thermoC} A</td></tr>
         </table>
     `;
 }
