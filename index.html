@@ -54,10 +54,20 @@
     }
     .output {
         margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        font-size: 16px;
+        width: 350px;
+        border-collapse: collapse;
+    }
+    .output table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .output th, .output td {
+        border: 1px solid #ccc;
+        padding: 8px;
+    }
+    .output th {
+        background-color: #f0f0f0;
     }
 </style>
 </head>
@@ -85,10 +95,7 @@
 </div>
 
 <div class="output" id="output">
-    <div>Average Current: </div>
-    <div>Peak Current: </div>
-    <div>Thermomagnetic C: </div>
-    <div>Thermomagnetic D: </div>
+    <!-- Results will be displayed here -->
 </div>
 
 <script>
@@ -107,36 +114,41 @@ function calculate() {
     const phases = parseInt(document.getElementById('phases').value);
     const startType = document.getElementById('startType').value;
 
-    if (isNaN(P) || isNaN(V) || isNaN(phases)) {
+    if (isNaN(P) || isNaN(V) || isNaN(phases) || P <= 0 || V <= 0) {
         alert('Please fill all fields correctly.');
         return;
     }
 
-    // Calculate average current
+    // Determine cosphi
+    const cosPhi = P <= 5 ? 0.8 : 0.85;
+    const efficiency = 0.9;
+
+    // Average current
     let Iavg = 0;
     if (phases === 1) {
-        Iavg = P * 1000 / V;
+        Iavg = (P * 1000) / (V * cosPhi * efficiency);
     } else {
-        Iavg = P * 1000 / (Math.sqrt(3) * V);
+        Iavg = (P * 1000) / (Math.sqrt(3) * V * cosPhi * efficiency);
     }
-
-    // Round to integer
     Iavg = Math.round(Iavg);
 
-    // Calculate peak current
-    let peakFactor = startType === 'DOL' ? 6 : 3; // typical peak factor
-    let Ipeak = Math.round(Iavg * peakFactor);
+    // Peak current
+    let Ipeak = startType === 'DOL' ? Math.round(Iavg * 7) : Math.round(Iavg * 7 / 3);
 
-    // Thermomagnetic recommendations rounded up to standard values
+    // Thermomagnetic
     let thermoC = roundUpToStandard(Iavg * 1.25);
     let thermoD = roundUpToStandard(Iavg * 1.6);
 
+    // Display in table
     const outputDiv = document.getElementById('output');
     outputDiv.innerHTML = `
-        <div>Average Current: ${Iavg} A</div>
-        <div>Peak Current: ${Ipeak} A</div>
-        <div>Thermomagnetic C: ${thermoC} A</div>
-        <div>Thermomagnetic D: ${thermoD} A</div>
+        <table>
+            <tr><th>Parameter</th><th>Value</th></tr>
+            <tr><td>Average Current</td><td>${Iavg} A</td></tr>
+            <tr><td>Peak Current</td><td>${Ipeak} A</td></tr>
+            <tr><td>Thermomagnetic C</td><td>${thermoC} A</td></tr>
+            <tr><td>Thermomagnetic D</td><td>${thermoD} A</td></tr>
+        </table>
     `;
 }
 </script>
