@@ -2,154 +2,132 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thermomagnetic Calculator</title>
 <style>
     body {
         font-family: Arial, sans-serif;
-        padding: 40px;
-        max-width: 900px;
-        margin: auto;
-    }
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
+        background-color: #222;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
     }
     img {
-        display: block;
-        margin: 0 auto 30px auto;
         width: 200px;
+        margin: 20px 0;
+    }
+    h1 {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .calculator {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 300px;
     }
     label {
-        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
     }
     input, select {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0 20px 0;
-        font-size: 16px;
-    }
-    input::placeholder {
-        color: #aaa;
+        padding: 5px;
+        border-radius: 5px;
+        border: none;
+        width: 140px;
+        text-align: right;
     }
     button {
-        width: 100%;
-        padding: 15px;
-        background-color: #333;
+        background-color: #007bff;
         color: white;
-        font-size: 18px;
         border: none;
+        padding: 10px;
+        border-radius: 5px;
         cursor: pointer;
+        font-weight: bold;
         margin-top: 10px;
     }
     button:hover {
-        background-color: #555;
+        background-color: #0056b3;
     }
     .output {
-        margin-top: 30px;
-        padding: 20px;
-        border: 1px solid #ddd;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 16px;
     }
-    .output h2 {
-        margin-top: 0;
-    }
-    .avg { color: green; }
-    .peak { color: blue; }
-    .curveC { color: orange; }
-    .curveD { color: red; }
 </style>
 </head>
 <body>
 
 <img src="logo.png" alt="Logo">
+<h1>Thermomagnetic Circuit Breaker Calculator</h1>
 
-<h1>Thermomagnetic Calculator</h1>
+<div class="calculator">
+    <label>Power (kW): <input type="number" id="power" min="0" step="0.1"></label>
+    <label>Voltage (V): <input type="number" id="voltage" min="0" step="1"></label>
+    <label>Phases:
+        <select id="phases">
+            <option value="1">1</option>
+            <option value="3">3</option>
+        </select>
+    </label>
+    <label>Start Type:
+        <select id="startType">
+            <option value="DOL">DOL</option>
+            <option value="SOFTSTART">SOFTSTART</option>
+        </select>
+    </label>
+    <button onclick="calculate()">Calculate</button>
+</div>
 
-<label>Motor Power (kW)</label>
-<input type="number" id="power" step="0.1" placeholder="Enter motor power in kW">
-
-<label>Voltage (V)</label>
-<input type="number" id="voltage" placeholder="Enter voltage in V">
-
-<label>Phases</label>
-<select id="phases">
-    <option value="1">1</option>
-    <option value="3">3</option>
-</select>
-
-<label>Start Mode</label>
-<select id="start">
-    <option value="DOL">DOL</option>
-    <option value="STAR-DELTA">Star-Delta</option>
-</select>
-
-<button onclick="calculate()">Calculate</button>
-
-<div class="output" id="result"></div>
+<div class="output" id="output">
+    <div>Average Current: </div>
+    <div>Peak Current: </div>
+    <div>Thermomagnetic C: </div>
+    <div>Thermomagnetic D: </div>
+</div>
 
 <script>
 function calculate() {
-    const power = parseFloat(document.getElementById("power").value);
-    const voltage = parseFloat(document.getElementById("voltage").value);
-    const phases = parseInt(document.getElementById("phases").value);
-    const start = document.getElementById("start").value;
+    const P = parseFloat(document.getElementById('power').value);
+    const V = parseFloat(document.getElementById('voltage').value);
+    const phases = parseInt(document.getElementById('phases').value);
+    const startType = document.getElementById('startType').value;
 
-    // --- VALIDATION ---
-    if (isNaN(power) || isNaN(voltage)) {
-        alert("Please enter valid numeric values for power and voltage.");
-        return;
-    }
-    if (![1,3].includes(phases) || !["DOL","STAR-DELTA"].includes(start)) {
-        alert("Please select valid phases and start mode.");
+    if (isNaN(P) || isNaN(V) || isNaN(phases)) {
+        alert('Please fill all fields correctly.');
         return;
     }
 
-    // --- AVERAGE CURRENT ---
-    const eff = (power < 5 ? 0.8 : 0.85); // efficiency
-    const divisorPh = (phases === 3 ? Math.sqrt(3) : 1);
-
-    let avg = (power / (voltage * eff)) * 1000 / divisorPh / 0.9; // includes pf 0.9
-    avg = Number(avg.toFixed(1));
-
-    // --- PEAK CURRENT ---
-    let peak = (start === "DOL") ? avg * 7 : avg * 7 / 3;
-    peak = Number(peak.toFixed(1));
-
-    // --- BREAKER NOMINAL LIST ---
-    const breakers = [6, 10, 16, 20, 25, 32, 40, 50];
-
-    // --- CURVE C ---
-    let curveC = "Not found";
-    for (let i = 0; i < breakers.length; i++) {
-        if (breakers[i] * 5 >= avg) {
-            curveC = "C" + breakers[i];
-            break;
-        }
+    // Calculate average current
+    let Iavg = 0;
+    if (phases === 1) {
+        Iavg = P * 1000 / V;
+    } else {
+        Iavg = P * 1000 / (Math.sqrt(3) * V);
     }
-    if (curveC === "Not found") curveC = "C>50";
 
-    // --- CURVE D ---
-    let curveD = "Not found";
-    for (let i = 0; i < breakers.length; i++) {
-        if (breakers[i] * 10 >= avg) {
-            curveD = "D" + breakers[i];
-            break;
-        }
-    }
-    if (curveD === "Not found") curveD = "D>50";
+    // Calculate peak current
+    let peakFactor = startType === 'DOL' ? 6 : 3; // typical peak factor for DOL vs Soft Start
+    let Ipeak = Iavg * peakFactor;
 
-    // --- DISPLAY RESULTS ---
-    document.getElementById("result").innerHTML = `
-        <h2>Results</h2>
-        <p><strong class="avg">Average Current:</strong> ${avg} A</p>
-        <p><strong class="peak">Peak Current:</strong> ${peak} A</p>
-        <p><strong class="curveC">Thermomagnetic Curve C:</strong> ${curveC}</p>
-        <p><strong class="curveD">Thermomagnetic Curve D:</strong> ${curveD}</p>
+    // Thermomagnetic recommendations
+    let thermoC = Math.ceil(Iavg * 1.25); // Curve C usually 1.25x nominal
+    let thermoD = Math.ceil(Iavg * 1.6);  // Curve D usually 1.6x nominal
+
+    const outputDiv = document.getElementById('output');
+    outputDiv.innerHTML = `
+        <div>Average Current: ${Iavg.toFixed(2)} A</div>
+        <div>Peak Current: ${Ipeak.toFixed(2)} A</div>
+        <div>Thermomagnetic C: ${thermoC} A</div>
+        <div>Thermomagnetic D: ${thermoD} A</div>
     `;
 }
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
