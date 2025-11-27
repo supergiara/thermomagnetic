@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thermomagnetic Calculator</title>
+<title>Circuit Breaker Calculator</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -60,11 +60,13 @@
     .output table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed; /* Equal column width */
         text-align: left;
     }
     .output th, .output td {
         border: 1px solid #ccc;
         padding: 8px;
+        word-wrap: break-word;
     }
     .output th {
         background-color: #f0f0f0;
@@ -74,7 +76,7 @@
 <body>
 
 <img src="logo.png" alt="Logo">
-<h1>Thermomagnetic Circuit Breaker Calculator</h1>
+<h1>Circuit Breaker Calculator</h1>
 
 <div class="calculator">
     <label>Power (kW): <input type="number" id="power" min="0" step="0.1"></label>
